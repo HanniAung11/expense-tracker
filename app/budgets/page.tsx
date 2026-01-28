@@ -263,7 +263,8 @@ export default function BudgetsPage() {
                       </div>
                       <Button
                         variant="outline"
-                        size="icon"
+                        size="sm"
+                        className="h-8 w-8 p-0"
                         onClick={() => handleDelete(budget)}
                       >
                         <Trash2 className="h-4 w-4" />

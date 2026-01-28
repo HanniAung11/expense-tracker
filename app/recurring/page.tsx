@@ -334,7 +334,8 @@ export default function RecurringPage() {
                       <div className="flex gap-1">
                         <Button
                           variant="outline"
-                          size="icon"
+                          size="sm"
+                          className="h-8 w-8 p-0"
                           onClick={() => toggleActive(item)}
                         >
                           {item.isActive ? (
@@ -345,7 +346,8 @@ export default function RecurringPage() {
                         </Button>
                         <Button
                           variant="outline"
-                          size="icon"
+                          size="sm"
+                          className="h-8 w-8 p-0"
                           onClick={() => handleDelete(item)}
                         >
                           <Trash2 className="h-4 w-4" />
