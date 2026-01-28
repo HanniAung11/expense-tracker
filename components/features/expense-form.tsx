@@ -27,7 +27,7 @@ export function ExpenseForm({
     formState: { errors },
     setValue,
     watch,
-  } = useForm<ExpenseFormData>({
+  } = useForm({
     resolver: zodResolver(expenseSchema),
     defaultValues: expense
       ? {
@@ -44,8 +44,8 @@ export function ExpenseForm({
 
   const dateValue = watch("date");
 
-  const handleFormSubmit = async (data: ExpenseFormData) => {
-    await onSubmit(data);
+  const handleFormSubmit = async (data: any) => {
+    await onSubmit(data as ExpenseFormData);
   };
 
   return (
