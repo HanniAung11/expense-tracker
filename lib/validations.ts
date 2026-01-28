@@ -13,9 +13,7 @@ export const expenseSchema = z.object({
       const decimals = val.toString().split(".")[1];
       return !decimals || decimals.length <= 2;
     }, "Amount can have at most 2 decimal places"),
-  category: z.enum(categoryNames as [string, ...string[]], {
-    required_error: "Category is required",
-  }),
+  category: z.enum(categoryNames as [string, ...string[]]),
   // Accept both Date objects and ISO date strings, then coerce to Date
   date: z
     .preprocess(
@@ -37,9 +35,7 @@ export const expenseSchema = z.object({
     .optional()
     .nullable()
     .transform((val) => (val?.trim() || null)),
-  paymentMethod: z.enum(paymentMethods as [string, ...string[]], {
-    required_error: "Payment method is required",
-  }),
+  paymentMethod: z.enum(paymentMethods as [string, ...string[]]),
 });
 
 export type ExpenseFormData = z.infer<typeof expenseSchema>;
