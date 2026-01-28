@@ -44,11 +44,11 @@ export function ExpensePieChart({ data }: ExpensePieChartProps) {
           ))}
         </Pie>
         <Tooltip
-          formatter={(value: number) =>
+          formatter={(value) =>
             new Intl.NumberFormat("en-US", {
               style: "currency",
               currency: "USD",
-            }).format(value)
+            }).format(typeof value === "number" ? value : Number(value ?? 0))
           }
         />
         <Legend />
