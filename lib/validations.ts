@@ -26,7 +26,7 @@ export const expenseSchema = z.object({
         return undefined;
       },
       z
-        .date({ required_error: "Date is required" })
+        .date()
         .max(new Date(), { message: "Date cannot be in the future" })
     ),
   description: z
