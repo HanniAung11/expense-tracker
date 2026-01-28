@@ -41,11 +41,11 @@ export function ExpenseBarChart({ data }: ExpenseBarChartProps) {
           }
         />
         <Tooltip
-          formatter={(value: number) =>
+          formatter={(value) =>
             new Intl.NumberFormat("en-US", {
               style: "currency",
               currency: "USD",
-            }).format(value)
+            }).format(typeof value === "number" ? value : Number(value ?? 0))
           }
         />
         <Bar dataKey="total" fill="#3b82f6" />
