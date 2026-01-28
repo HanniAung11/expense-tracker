@@ -1,0 +1,133 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Firebase-authenticated user
+model User {
+  id        String   @id @default(uuid())
+  firebaseUid String @unique
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expenses          Expense[]
+  budgets           Budget[]
+  recurringExpenses RecurringExpense[]
+  templates         ExpenseTemplate[]
+  goals             ExpenseGoal[]
+}
+
+model Expense {
+  id            String   @id @default(uuid())
+  userId        String   @default("demo-user")
+  amount        Float
+  category      String
+  date          DateTime
+  description   String?
+  paymentMethod String
+  tags          String?  // JSON array of tags
+  isRecurring   Boolean  @default(false)
+  recurringId   String?  // Reference to RecurringExpense
+  templateId    String?  // Reference to ExpenseTemplate
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([userId, category])
+  @@index([isRecurring])
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  icon      String
+  color     String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Budget {
+  id            String   @id @default(uuid())
+  userId        String   @default("demo-user")
+  category      String?  // null for overall budget
+  amount        Float
+  period        String   // "monthly", "yearly", "weekly"
+  startDate     DateTime
+  endDate       DateTime?
+  alertThreshold Float? // Alert when spending reaches this percentage
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, category])
+  @@index([userId, startDate])
+}
+
+model RecurringExpense {
+  id            String   @id @default(uuid())
+  userId        String   @default("demo-user")
+  amount        Float
+  category      String
+  description   String?
+  paymentMethod String
+  frequency     String   // "daily", "weekly", "monthly", "yearly"
+  dayOfMonth    Int?     // For monthly: which day
+  dayOfWeek     Int?     // For weekly: 0-6 (Sunday-Saturday)
+  startDate     DateTime
+  endDate       DateTime?
+  isActive      Boolean  @default(true)
+  nextDueDate   DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([userId, nextDueDate])
+}
+
+model ExpenseTemplate {
+  id            String   @id @default(uuid())
+  userId        String   @default("demo-user")
+  name          String
+  amount        Float?
+  category      String
+  description   String?
+  paymentMethod String?
+  tags          String?  // JSON array of tags
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, name])
+}
+
+model ExpenseGoal {
+  id            String   @id @default(uuid())
+  userId        String   @default("demo-user")
+  name          String
+  targetAmount  Float
+  currentAmount Float  @default(0)
+  category      String?  // null for overall goal
+  startDate     DateTime
+  endDate       DateTime
+  isCompleted   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isCompleted])
+  @@index([userId, endDate])
+}
