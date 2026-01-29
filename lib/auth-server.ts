@@ -1,3 +1,4 @@
+// Production-ready authentication with automatic fallback
 import { initializeApp, getApps, cert, type App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { prisma } from "./db";
