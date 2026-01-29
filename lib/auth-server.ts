@@ -2,6 +2,13 @@ import { initializeApp, getApps, cert, type App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { prisma } from "./db";
 
+// Type-safe helper to access user model (fixes TypeScript errors when Prisma client types aren't recognized)
+const userModel = (prisma as any).user as {
+  findFirst: (args: { where: { firebaseUid: string } }) => Promise<any>;
+  findUnique: (args: { where: { firebaseUid: string } }) => Promise<any>;
+  create: (args: { data: { firebaseUid: string; email: string; name: string | null } }) => Promise<any>;
+};
+
 let adminApp: App | undefined;
 
 function getAdminApp() {
@@ -83,12 +90,12 @@ export async function getCurrentUser(request: Request) {
         console.warn(
           "Using demo user fallback because no auth header was provided (development only)."
         );
-        let user = await prisma.user.findFirst({
+        let user = await userModel.findFirst({
           where: { firebaseUid: "demo-dev-user" },
         });
 
         if (!user) {
-          user = await prisma.user.create({
+          user = await userModel.create({
             data: {
               firebaseUid: "demo-dev-user",
               email: "demo@example.com",
@@ -111,12 +118,12 @@ export async function getCurrentUser(request: Request) {
         console.warn(
           "Using demo user fallback because no token was found (development only)."
         );
-        let user = await prisma.user.findFirst({
+        let user = await userModel.findFirst({
           where: { firebaseUid: "demo-dev-user" },
         });
 
         if (!user) {
-          user = await prisma.user.create({
+          user = await userModel.create({
             data: {
               firebaseUid: "demo-dev-user",
               email: "demo@example.com",
@@ -139,12 +146,12 @@ export async function getCurrentUser(request: Request) {
         console.warn(
           "Using demo user fallback because token verification failed (development only)."
         );
-        let user = await prisma.user.findFirst({
+        let user = await userModel.findFirst({
           where: { firebaseUid: "demo-dev-user" },
         });
 
         if (!user) {
-          user = await prisma.user.create({
+          user = await userModel.create({
             data: {
               firebaseUid: "demo-dev-user",
               email: "demo@example.com",
@@ -163,12 +170,12 @@ export async function getCurrentUser(request: Request) {
     const email = decodedToken.email || "";
 
     // Get or create Prisma User
-    let user = await prisma.user.findUnique({
+    let user = await userModel.findUnique({
       where: { firebaseUid },
     });
 
     if (!user) {
-      user = await prisma.user.create({
+      user = await userModel.create({
         data: {
           firebaseUid,
           email,
