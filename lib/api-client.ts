@@ -47,10 +47,15 @@ export async function authenticatedFetch(
     headers,
   });
 
-  // Log error responses for debugging
+  // Log error responses for debugging (clone response so body can still be read by caller)
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`API Error (${response.status}):`, errorText);
+    const clonedResponse = response.clone();
+    try {
+      const errorText = await clonedResponse.text();
+      console.error(`API Error (${response.status}):`, errorText);
+    } catch (error) {
+      console.error(`API Error (${response.status}): Failed to read error body`);
+    }
   }
 
   return response;

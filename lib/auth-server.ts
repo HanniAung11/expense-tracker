@@ -78,18 +78,45 @@ export async function verifyIdToken(idToken: string) {
   }
 }
 
+// Helper function to get or create anonymous user
+async function getAnonymousUser() {
+  let user = await userModel.findFirst({
+    where: { firebaseUid: "anon-server-user" },
+  });
+
+  if (!user) {
+    user = await userModel.create({
+      data: {
+        firebaseUid: "anon-server-user",
+        email: "anon@example.com",
+        name: "Anonymous",
+      },
+    });
+  }
+
+  return user;
+}
+
 export async function getCurrentUser(request: Request) {
   try {
+    // Check if anonymous user is explicitly disabled
+    const anonDisabled = process.env.DISABLE_ANON_USER === "true";
+    const isProduction = process.env.NODE_ENV === "production";
+    
     // Get token from Authorization header
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       console.warn("No authorization header found");
 
-      // Development fallback: use demo user so the app works without full Firebase Admin setup
-      if (process.env.NODE_ENV !== "production") {
-        console.warn(
-          "Using demo user fallback because no auth header was provided (development only)."
-        );
+      // Production: automatically use anonymous user (unless disabled)
+      if (isProduction && !anonDisabled) {
+        console.log("Production: Using anonymous user (no auth header)");
+        return await getAnonymousUser();
+      }
+
+      // Development fallback: use demo user
+      if (!isProduction) {
+        console.warn("Development: Using demo user (no auth header)");
         let user = await userModel.findFirst({
           where: { firebaseUid: "demo-dev-user" },
         });
@@ -107,6 +134,7 @@ export async function getCurrentUser(request: Request) {
         return user;
       }
 
+      // If disabled, return null
       return null;
     }
 
@@ -114,10 +142,15 @@ export async function getCurrentUser(request: Request) {
     if (!idToken) {
       console.warn("No token found in authorization header");
 
-      if (process.env.NODE_ENV !== "production") {
-        console.warn(
-          "Using demo user fallback because no token was found (development only)."
-        );
+      // Production: automatically use anonymous user (unless disabled)
+      if (isProduction && !anonDisabled) {
+        console.log("Production: Using anonymous user (no token)");
+        return await getAnonymousUser();
+      }
+
+      // Development fallback
+      if (!isProduction) {
+        console.warn("Development: Using demo user (no token)");
         let user = await userModel.findFirst({
           where: { firebaseUid: "demo-dev-user" },
         });
@@ -142,10 +175,15 @@ export async function getCurrentUser(request: Request) {
     if (!decodedToken) {
       console.warn("Token verification failed");
 
-      if (process.env.NODE_ENV !== "production") {
-        console.warn(
-          "Using demo user fallback because token verification failed (development only)."
-        );
+      // Production: automatically use anonymous user if verification fails (unless disabled)
+      if (isProduction && !anonDisabled) {
+        console.log("Production: Token verification failed, using anonymous user");
+        return await getAnonymousUser();
+      }
+
+      // Development fallback
+      if (!isProduction) {
+        console.warn("Development: Using demo user (token verification failed)");
         let user = await userModel.findFirst({
           where: { firebaseUid: "demo-dev-user" },
         });
@@ -187,6 +225,20 @@ export async function getCurrentUser(request: Request) {
     return user;
   } catch (error) {
     console.error("Error getting current user:", error);
+    
+    // In production, try to return anonymous user as last resort (unless disabled)
+    const isProduction = process.env.NODE_ENV === "production";
+    const anonDisabled = process.env.DISABLE_ANON_USER === "true";
+    
+    if (isProduction && !anonDisabled) {
+      console.log("Production: Error occurred, falling back to anonymous user");
+      try {
+        return await getAnonymousUser();
+      } catch (fallbackError) {
+        console.error("Failed to get anonymous user:", fallbackError);
+      }
+    }
+    
     return null;
   }
 }
